@@ -523,7 +523,8 @@ contains
     qclvar, thlprcp_out, &                                  ! intent(out)
 #endif
     wprcp, ice_supersat_frac, &                             ! intent(out)
-    rcm_in_layer, cloud_cover )                             ! intent(out)
+    rcm_in_layer, cloud_cover,&                             ! intent(out)
+    wp4_c, wprtp2_c, wpthlp2_c, wp2rtp_c, wp2thlp_c, wprtpthlp_c, wp3_zm_c) ! clasp 
 
     use advance_clubb_core_module, only : advance_clubb_core
 
@@ -644,6 +645,11 @@ contains
       wp2,     & ! w'^2 (momentum levels)                         [m^2/s^2]
       wp3        ! w'^3 (thermodynamic levels)                    [m^3/s^3]
 
+    ! clasp 
+    real( kind = core_rknd ), intent(out), dimension(gr%nz) :: &
+         wp4_c,      &
+         wprtp2_c, wpthlp2_c, wp2rtp_c, wp2thlp_c, wprtpthlp_c, wp3_zm_c  
+    
     ! Passive scalar variables
     real( kind = core_rknd ), intent(inout), dimension(gr%nz,sclr_dim) :: &
       sclrm,     & ! Passive scalar mean (thermo. levels) [units vary]
@@ -757,6 +763,7 @@ contains
 #endif
       wprcp, ice_supersat_frac, &                             ! intent(out)
       rcm_in_layer, cloud_cover, &                            ! intent(out)
+      wp4_c, wprtp2_c, wpthlp2_c, wp2rtp_c, wp2thlp_c, wprtpthlp_c, wp3_zm_c, & ! clasp 
       err_code_api )                                          ! intent(out)
 
   end subroutine advance_clubb_core_api

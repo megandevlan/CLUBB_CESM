@@ -55,6 +55,9 @@ module advance_xp2_xpyp_module
                                sclrm, wpsclrp,                         & ! In
                                wpsclrp2, wpsclrprtp, wpsclrpthlp,      & ! In
                                wp2_splat,                              & ! In
+                               have_wprtp2_sfc, wprtp2_sfc,        & ! clasp In
+                               have_wpthlp2_sfc, wpthlp2_sfc,      & 
+                               have_wprtpthlp_sfc, wprtpthlp_sfc,  &
                                l_predict_upwp_vpwp,                    & ! In
                                l_min_xp2_from_corr_wx,                 & ! In
                                l_C2_cloud_frac,                        & ! In
@@ -227,7 +230,13 @@ module advance_xp2_xpyp_module
       Lscale,          & ! Mixing length                         [m]
       wp3_on_wp2,      & ! Smoothed version of <w'^3>/<w'^2> zm  [m/s]
       wp3_on_wp2_zt      ! Smoothed version of <w'^3>/<w'^2> zt  [m/s]
-
+    
+    ! clasp 
+    logical, intent(in) ::  & 
+         have_wprtp2_sfc, have_wpthlp2_sfc, have_wprtpthlp_sfc
+    real( kind = core_rknd ), intent(in), dimension(1) :: &
+         wprtp2_sfc, wpthlp2_sfc, wprtpthlp_sfc 
+    
     type(implicit_coefs_terms), intent(in) :: &
       pdf_implicit_coefs_terms    ! Implicit coefs / explicit terms [units vary]
 
@@ -444,6 +453,9 @@ module advance_xp2_xpyp_module
                                  rho_ds_zt, invrs_rho_ds_zm, rho_ds_zm,              & ! In
                                  wp3_on_wp2, wp3_on_wp2_zt, sigma_sqd_w,             & ! In
                                  pdf_implicit_coefs_terms, l_scalar_calc,            & ! In
+                                 have_wprtp2_sfc, wprtp2_sfc,        & ! clasp In
+                                 have_wpthlp2_sfc, wpthlp2_sfc,      & 
+                                 have_wprtpthlp_sfc, wprtpthlp_sfc,  &
                                  l_upwind_xpyp_ta,                                   & ! In
                                  lhs_ta_wprtp2, lhs_ta_wpthlp2, lhs_ta_wprtpthlp,    & ! Out
                                  lhs_ta_wpup2, lhs_ta_wpvp2, lhs_ta_wpsclrp2,        & ! Out
@@ -2746,6 +2758,9 @@ module advance_xp2_xpyp_module
                                      rho_ds_zt, invrs_rho_ds_zm, rho_ds_zm, &
                                      wp3_on_wp2, wp3_on_wp2_zt, sigma_sqd_w, &
                                      pdf_implicit_coefs_terms, l_scalar_calc, &
+                                     have_wprtp2_sfc, wprtp2_sfc,        & ! clasp In
+                                     have_wpthlp2_sfc, wpthlp2_sfc,      & 
+                                     have_wprtpthlp_sfc, wprtpthlp_sfc,  &
                                      l_upwind_xpyp_ta, &
                                      lhs_ta_wprtp2, lhs_ta_wpthlp2, lhs_ta_wprtpthlp, &
                                      lhs_ta_wpup2, lhs_ta_wpvp2, lhs_ta_wpsclrp2, &
@@ -2863,6 +2878,12 @@ module advance_xp2_xpyp_module
                        ! mean advection terms. It affects rtp2, thlp2, up2, vp2, sclrp2,
                        ! rtpthlp, sclrprtp, & sclrpthlp.
 
+    ! clasp 
+    logical, intent(in) ::  & 
+         have_wprtp2_sfc, have_wpthlp2_sfc, have_wprtpthlp_sfc
+    real( kind = core_rknd ), intent(in), dimension(1) :: &
+         wprtp2_sfc, wpthlp2_sfc, wprtpthlp_sfc 
+    
     !------------------- Output Variables -------------------
     
     ! Implicit (LHS) turbulent advection terms
@@ -3049,6 +3070,10 @@ module advance_xp2_xpyp_module
       ! Interpolate wprtp2 to momentum levels, and calculate the sign of vertical velocity
       if ( l_upwind_xpyp_ta ) then
         term_wprtp2_explicit_zm = zt2zm( wprtp2 )
+
+        ! clasp
+        if (have_wprtp2_sfc) term_wprtp2_explicit_zm(1) = wprtp2_sfc(1)
+
         sgn_t_vel_rtp2 = sgn_turbulent_velocity( term_wprtp2_explicit_zm, rtp2 )
       end if
             
@@ -3067,6 +3092,10 @@ module advance_xp2_xpyp_module
       ! Interpolate wpthlp2 to momentum levels, and calculate the sign of vertical velocity
       if ( l_upwind_xpyp_ta ) then
         term_wpthlp2_explicit_zm = zt2zm( wpthlp2 )
+
+        ! clasp
+        if (have_wpthlp2_sfc) term_wpthlp2_explicit_zm(1) = wpthlp2_sfc(1)
+        
         sgn_t_vel_thlp2 = sgn_turbulent_velocity( term_wpthlp2_explicit_zm, thlp2 )
       end if
     
@@ -3085,6 +3114,10 @@ module advance_xp2_xpyp_module
       ! Interpolate wprtpthlp to momentum levels, and calculate the sign of vertical velocity
       if ( l_upwind_xpyp_ta ) then
         term_wprtpthlp_explicit_zm = zt2zm( wprtpthlp )
+
+        ! clasp
+        if (have_wprtpthlp_sfc) term_wprtpthlp_explicit_zm(1) = wprtpthlp_sfc(1)
+        
         sgn_t_vel_rtpthlp = sgn_turbulent_velocity( term_wprtpthlp_explicit_zm, rtpthlp )
       end if    
     

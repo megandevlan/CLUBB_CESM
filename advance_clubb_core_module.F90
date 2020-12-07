@@ -165,6 +165,7 @@ module advance_clubb_core_module
 #endif
                wprcp, ice_supersat_frac, &                          ! intent(out)
                rcm_in_layer, cloud_cover, &                         ! intent(out)
+               wp4_c, wprtp2_c, wpthlp2_c, wp2rtp_c, wp2thlp_c, wprtpthlp_c, wp3_zm_c, & ! clasp 
                err_code_out )                                       ! intent(out)
 
     ! Description:
@@ -450,6 +451,17 @@ module advance_clubb_core_module
     use interpolation, only: &
       pvertinterp
 
+    use scamMod,       only: have_wp2_clasp, wp2_clasp, &
+                         have_thlp2_clasp, thlp2_clasp, &
+                         have_rtp2_clasp, rtp2_clasp, &
+                         have_rtpthlp_clasp, rtpthlp_clasp, &
+                         have_wp3_clasp, wp3_clasp, &
+                         have_wp4_clasp, wp4_clasp, &
+                         have_wprtp2_clasp, wprtp2_clasp, &
+                         have_wpthlp2_clasp, wpthlp2_clasp, &
+                         have_wp2rtp_clasp, wp2rtp_clasp, &
+                         have_wp2thlp_clasp, wp2thlp_clasp, &
+                         have_wprtpthlp_clasp, wprtpthlp_clasp
     implicit none
 
     !!! External
@@ -568,6 +580,11 @@ module advance_clubb_core_module
       rtpthlp, & ! r_t'th_l' (momentum levels)                    [(kg/kg) K]
       wp2,     & ! w'^2 (momentum levels)                         [m^2/s^2]
       wp3        ! w'^3 (thermodynamic levels)                    [m^3/s^3]
+
+    ! clasp 
+    real( kind = core_rknd ), intent(out), dimension(gr%nz) :: &
+      wp4_c,      &
+      wprtp2_c, wpthlp2_c, wp2rtp_c, wp2thlp_c, wprtpthlp_c, wp3_zm_c  
 
     ! Passive scalar variables
     real( kind = core_rknd ), intent(inout), dimension(gr%nz,sclr_dim) :: &
@@ -936,6 +953,13 @@ module advance_clubb_core_module
     newmu = mu
 #endif
 
+    ! Interpolate wp3 to momentum levels, and wp2 to thermodynamic levels
+    ! and then compute Skw for m & t grid.
+    wp2_zt = max( zm2zt( wp2 ), w_tol_sqd ) ! Positive definite quantity
+    wp3_zm = zt2zm( wp3 )
+    ! clasp 
+    if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1) 
+
     if ( ipdf_call_placement == ipdf_pre_advance_fields &
          .or. ipdf_call_placement == ipdf_pre_post_advance_fields ) then
 
@@ -956,7 +980,7 @@ module advance_clubb_core_module
        call pdf_closure_driver( dt, hydromet_dim, wprtp,                     & ! Intent(in)
                                 thlm, wpthlp, rtp2, rtp3,                    & ! Intent(in)
                                 thlp2, thlp3, rtpthlp, wp2,                  & ! Intent(in)
-                                wp3, wm_zm, wm_zt,                           & ! Intent(in)
+                                wp3, wp3_zm, wm_zm, wm_zt,                   & ! Intent(in)
                                 um, up2, upwp, up3,                          & ! Intent(in)
                                 vm, vp2, vpwp, vp3,                          & ! Intent(in)
                                 p_in_Pa, exner,                              & ! Intent(in)
@@ -1003,11 +1027,6 @@ module advance_clubb_core_module
 
     endif ! ipdf_call_placement == ipdf_pre_advance_fields
           ! or ipdf_call_placement == ipdf_pre_post_advance_fields
-
-    ! Interpolate wp3 to momentum levels, and wp2 to thermodynamic levels
-    ! and then compute Skw for m & t grid.
-    wp2_zt = max( zm2zt( wp2 ), w_tol_sqd ) ! Positive definite quantity
-    wp3_zm = zt2zm( wp3 )
 
     Skw_zt(1:gr%nz) = Skx_func( wp2_zt(1:gr%nz), wp3(1:gr%nz), w_tol )
     Skw_zm(1:gr%nz) = Skx_func( wp2(1:gr%nz), wp3_zm(1:gr%nz), w_tol )
@@ -1314,6 +1333,21 @@ module advance_clubb_core_module
                              sclrp2(1,1:sclr_dim),                           &      ! intent(out)
                              sclrprtp(1,1:sclr_dim),                         &      ! intent(out)
                              sclrpthlp(1,1:sclr_dim) )                              ! intent(out)
+        
+        ! clasp 
+        ! momentum levels 
+        if (have_wp2_clasp) wp2(1) = wp2_clasp(1) 
+        if (have_rtp2_clasp) rtp2(1) = rtp2_clasp(1) 
+        if (have_thlp2_clasp) thlp2(1) = thlp2_clasp(1) 
+        if (have_rtpthlp_clasp) rtpthlp(1) = rtpthlp_clasp(1) 
+        if (have_wp4_clasp) wp4(1) = wp4_clasp(1) 
+        ! thermodynamic levels 
+        ! if (have_wp3_clasp) wp3(1) = wp3_clasp(1) 
+        ! if (have_wp2thlp_clasp) wp2thlp(1) = wp2thlp_clasp(1) 
+        ! if (have_wp2rtp_clasp) wp2rtp(1) = wp2rtp_clasp(1) 
+        ! if (have_wpthlp2_clasp) wpthlp2(1) = wpthlp2_clasp(1) 
+        ! if (have_wprtp2_clasp) wprtp2(1) = wprtp2_clasp(1) 
+        ! if (have_wprtpthlp_clasp) wprtpthlp(1) = wprtpthlp_clasp(1) 
 
         if ( clubb_at_least_debug_level( 0 ) ) then
           if ( err_code == clubb_fatal_error ) then
@@ -1484,6 +1518,8 @@ module advance_clubb_core_module
                             clubb_config_flags%l_use_C7_Richardson,          & ! intent(in)
                             clubb_config_flags%l_brunt_vaisala_freq_moist,   & ! intent(in)
                             clubb_config_flags%l_use_thvm_in_bv_freq,        & ! intent(in)
+                            have_wp2thlp_clasp, wp2thlp_clasp,            & ! clasp intent(in)
+                            have_wp2rtp_clasp, wp2rtp_clasp,              &
                             rtm, wprtp, thlm, wpthlp,                        & ! intent(inout)
                             sclrm, wpsclrp, um, upwp, vm, vpwp )               ! intent(inout)
 
@@ -1536,6 +1572,9 @@ module advance_clubb_core_module
                              sclrm, wpsclrp,                            & ! intent(in)
                              wpsclrp2, wpsclrprtp, wpsclrpthlp,         & ! intent(in)
                              wp2_splat,                                 & ! intent(in)
+                             have_wprtp2_clasp, wprtp2_clasp,            & ! clasp intent(in)
+                             have_wpthlp2_clasp, wpthlp2_clasp,          &
+                             have_wprtpthlp_clasp, wprtpthlp_clasp,      &
                              clubb_config_flags%l_predict_upwp_vpwp,    & ! intent(in)
                              clubb_config_flags%l_min_xp2_from_corr_wx, & ! intent(in)
                              clubb_config_flags%l_C2_cloud_frac,        & ! intent(in)
@@ -1602,6 +1641,9 @@ module advance_clubb_core_module
              clubb_config_flags%l_use_C11_Richardson,            & ! intent(in)
              clubb_config_flags%l_damp_wp3_Skw_squared,          & ! intent(in)
              wp2, wp3, wp3_zm, wp2_zt )                            ! intent(inout)
+
+      ! clasp 
+      if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1)   ! for output purposes
 
       if ( clubb_at_least_debug_level( 0 ) ) then
           if ( err_code == clubb_fatal_error ) then
@@ -1806,7 +1848,7 @@ module advance_clubb_core_module
        call pdf_closure_driver( dt, hydromet_dim, wprtp,                     & ! Intent(in)
                                 thlm, wpthlp, rtp2, rtp3,                    & ! Intent(in)
                                 thlp2, thlp3, rtpthlp, wp2,                  & ! Intent(in)
-                                wp3, wm_zm, wm_zt,                           & ! Intent(in)
+                                wp3, wp3_zm, wm_zm, wm_zt,                   & ! Intent(in)
                                 um, up2, upwp, up3,                          & ! Intent(in)
                                 vm, vp2, vpwp, vp3,                          & ! Intent(in)
                                 p_in_Pa, exner,                              & ! Intent(in)
@@ -1859,6 +1901,14 @@ module advance_clubb_core_module
       thlprcp_out(:) = thlprcp(:)
 #endif
 
+      ! clasp output 
+      wp4_c = wp4 
+      wprtp2_c    = wprtp2 
+      wpthlp2_c   = wpthlp2 
+      wp2rtp_c    = wp2rtp 
+      wp2thlp_c   = wp2thlp 
+      wprtpthlp_c = wprtpthlp
+      wp3_zm_c = wp3_zm 
 
       !#######################################################################
       !#############            ACCUMULATE STATISTICS            #############
@@ -2038,7 +2088,7 @@ module advance_clubb_core_module
   subroutine pdf_closure_driver( dt, hydromet_dim, wprtp,       & ! Intent(in)
                                  thlm, wpthlp, rtp2, rtp3,      & ! Intent(in)
                                  thlp2, thlp3, rtpthlp, wp2,    & ! Intent(in)
-                                 wp3, wm_zm, wm_zt,             & ! Intent(in)
+                                 wp3, wp3_zm, wm_zm, wm_zt,     & ! Intent(in)
                                  um, up2, upwp, up3,            & ! Intent(in)
                                  vm, vp2, vpwp, vp3,            & ! Intent(in)
                                  p_in_Pa, exner,                & ! Intent(in)
@@ -2223,6 +2273,7 @@ module advance_clubb_core_module
       rtpthlp,   & ! r_t' th_l' (momentum levels)                   [(kg/kg) K]
       wp2,       & ! w'^2 (momentum levels)                         [m^2/s^2]
       wp3,       & ! w'^3 (thermodynamic levels)                    [m^3/s^3]
+      wp3_zm,    & ! w'^3 (interpolated to momentum levels)         [m^3/s^3]
       wm_zm,     & ! w mean wind component on momentum levels       [m/s]
       wm_zt,     & ! w mean wind component on thermo. levels        [m/s]
       p_in_Pa,   & ! Air pressure (thermodynamic levels)            [Pa]
@@ -2372,7 +2423,7 @@ module advance_clubb_core_module
     !!! Local Variables
     real( kind = core_rknd ), dimension(gr%nz) :: &
       wp2_zt,        & ! wp2 interpolated to thermodynamic levels    [m^2/s^2]
-      wp3_zm,        & ! wp3 interpolated to momentum levels         [m^3/s^3]
+!      wp3_zm,        & ! wp3 interpolated to momentum levels         [m^3/s^3]
       rtp2_zt,       & ! rtp2 interpolated to thermodynamic levels   [kg^2/kg^2]
       rtp3_zm,       & ! rtp3 interpolated to momentum levels        [kg^3/kg^3]
       thlp2_zt,      & ! thlp2 interpolated to thermodynamic levels  [K^2]
@@ -2593,7 +2644,7 @@ module advance_clubb_core_module
     !---------------------------------------------------------------------------
 
     wp2_zt   = max( zm2zt( wp2 ), w_tol_sqd ) ! Positive definite quantity
-    wp3_zm   = zt2zm( wp3 )
+!    wp3_zm   = zt2zm( wp3 )
     thlp2_zt = max( zm2zt( thlp2 ), thl_tol**2 ) ! Positive definite quantity
     thlp3_zm = zt2zm( thlp3 )
     rtp2_zt  = max( zm2zt( rtp2 ), rt_tol**2 ) ! Positive definite quantity
