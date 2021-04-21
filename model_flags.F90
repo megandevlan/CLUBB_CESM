@@ -210,7 +210,9 @@ module model_flags
                                       ! rtpthlp
       l_damp_wp3_Skw_squared,       & ! Set damping on wp3 to use Skw^2 rather than Skw^4
       l_prescribed_avg_deltaz,      & ! used in adj_low_res_nu. If .true., avg_deltaz = deltaz
-      l_update_pressure               ! Flag for having CLUBB update pressure and exner
+      l_update_pressure,            & ! Flag for having CLUBB update pressure and exner
+      ctsm_moments                    ! Flag for using surface moments computed by CTSM (CLASP)
+
   end type clubb_config_flags_type
 
   contains
@@ -317,7 +319,8 @@ module model_flags
                                              l_single_C2_Skw, &
                                              l_damp_wp3_Skw_squared, &
                                              l_prescribed_avg_deltaz, &
-                                             l_update_pressure )
+                                             l_update_pressure, &
+                                             ctsm_moments )
 
 ! Description:
 !   Sets all CLUBB flags to a default setting.
@@ -416,8 +419,9 @@ module model_flags
                                       ! rtpthlp
       l_damp_wp3_Skw_squared,       & ! Set damping on wp3 to use Skw^2 rather than Skw^4
       l_prescribed_avg_deltaz,      & ! used in adj_low_res_nu. If .true., avg_deltaz = deltaz
-      l_update_pressure               ! Flag for having CLUBB update pressure and exner
-
+      l_update_pressure,            & ! Flag for having CLUBB update pressure and exner
+      ctsm_moments                    ! Flag for using surface moments computed by CTSM (CLASP)
+ 
 !-----------------------------------------------------------------------
     ! Begin code
 
@@ -464,6 +468,7 @@ module model_flags
     l_prescribed_avg_deltaz = .false.
 #endif
     l_update_pressure = .true.
+    ctsm_moments = .false.
 
     return
   end subroutine set_default_clubb_config_flags
@@ -508,7 +513,9 @@ module model_flags
                                                  l_damp_wp3_Skw_squared, &
                                                  l_prescribed_avg_deltaz, &
                                                  l_update_pressure, &
+                                                 ctsm_moments, &
                                                  clubb_config_flags )
+
 
 ! Description:
 !   Initialize the clubb_config_flags_type.
@@ -607,7 +614,8 @@ module model_flags
                                       ! rtpthlp
       l_damp_wp3_Skw_squared,       & ! Set damping on wp3 to use Skw^2 rather than Skw^4
       l_prescribed_avg_deltaz,      & ! used in adj_low_res_nu. If .true., avg_deltaz = deltaz
-      l_update_pressure               ! Flag for having CLUBB update pressure and exner
+      l_update_pressure,            & ! Flag for having CLUBB update pressure and exner
+      ctsm_moments                    ! Flag for using suface moments computed by CTSM (CLASP) 
 
     ! Output variables
     type(clubb_config_flags_type), intent(out) :: &
@@ -655,6 +663,7 @@ module model_flags
     clubb_config_flags%l_damp_wp3_Skw_squared = l_damp_wp3_Skw_squared
     clubb_config_flags%l_prescribed_avg_deltaz = l_prescribed_avg_deltaz
     clubb_config_flags%l_update_pressure = l_update_pressure
+    clubb_config_flags%ctsm_moments     = ctsm_moments
 
     return
   end subroutine initialize_clubb_config_flags_type
@@ -722,6 +731,7 @@ module model_flags
     write(iunit,*) "l_damp_wp3_Skw_squared = ", clubb_config_flags%l_damp_wp3_Skw_squared
     write(iunit,*) "l_prescribed_avg_deltaz = ", clubb_config_flags%l_prescribed_avg_deltaz
     write(iunit,*) "l_update_pressure = ", clubb_config_flags%l_update_pressure
+    write(iunit,*) "ctsm_moments = ", clubb_config_flags%ctsm_moments
 
     return
   end subroutine print_clubb_config_flags
