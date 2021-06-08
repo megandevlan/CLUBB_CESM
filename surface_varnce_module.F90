@@ -84,8 +84,9 @@ module surface_varnce_module
     ! Constant Parameters
 
     ! Logical for Andre et al., 1978 parameterization.
-    logical, parameter :: l_andre_1978 = .false.
-
+!+++ MDF (set to true)
+    logical, parameter :: l_andre_1978 = .true.
+!--- MDF
     real( kind = core_rknd ), parameter ::  & 
       a_const = 1.8_core_rknd, & 
       z_const = one, & ! Defined height of 1 meter                [m]

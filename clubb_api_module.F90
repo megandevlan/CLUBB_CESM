@@ -487,6 +487,11 @@ contains
     wpthlp_forcing, rtp2_forcing, thlp2_forcing, &          ! intent(in)
     rtpthlp_forcing, wm_zm, wm_zt, &                        ! intent(in)
     wpthlp_sfc, wprtp_sfc, upwp_sfc, vpwp_sfc, &            ! intent(in)
+! +++ MDF
+    wp2_sfc, thlp2_sfc, rtp2_sfc, rtpthlp_sfc, &            ! intent(in)
+    wp4_sfc, wp3_sfc, wp2thlp_sfc, wp2rtp_sfc, &            ! intent(in)
+    wpthlp2_sfc, wprtp2_sfc, wprtpthlp_sfc, up2_sfc, &      ! intent(in)
+! --- MDF
     wpsclrp_sfc, wpedsclrp_sfc, &                           ! intent(in)
     p_in_Pa, rho_zm, rho, exner, &                          ! intent(in)
     rho_ds_zm, rho_ds_zt, invrs_rho_ds_zm, &                ! intent(in)
@@ -597,7 +602,22 @@ contains
       wpthlp_sfc,   & ! w' theta_l' at surface   [(m K)/s]
       wprtp_sfc,    & ! w' r_t' at surface       [(kg m)/( kg s)]
       upwp_sfc,     & ! u'w' at surface          [m^2/s^2]
-      vpwp_sfc        ! v'w' at surface          [m^2/s^2]
+      !vpwp_sfc        ! v'w' at surface          [m^2/s^2]
+!+++ MDF
+      vpwp_sfc,      &  ! v'w' at surface                [m^2/s^2]
+      wp2_sfc,       &  ! w'w' at surface                [m^2/s^2] 
+      thlp2_sfc,     &  ! theta_l'theta_l' at surface    [K^2] 
+      rtp2_sfc,      &  ! r_t'r_t' at surface            [kg/kg]
+      rtpthlp_sfc,   &  ! r_t'theta_l' at surface        [K kg/kg]
+      wp4_sfc,       &  ! w'w'w'w' at surface            [m^2/s^2] 
+      wp3_sfc,       &  ! w'w'w' at surface              [m^3/s^3]
+      wp2thlp_sfc,   &  ! w'w'theta_l' at surface        [K m^2/s^2] 
+      wp2rtp_sfc,    &  ! w'w'r_t' at surface            [m^2 kg/s^2 kg]
+      wpthlp2_sfc,   &  ! w'theta_l'theta_l' at surface  [K^2 m/s]
+      wprtp2_sfc,    &  ! w'r_t'r_t' at surface          [m kg^2/s kg^2]
+      wprtpthlp_sfc, &  ! w'theta_l'r_t' at surface      [K m kg/s kg]
+      up2_sfc           ! u'u' at surface                [m^2/s^2] 
+!--- MDF
 
     ! Passive scalar variables
     real( kind = core_rknd ), intent(in), dimension(gr%nz,sclr_dim) :: &
@@ -726,6 +746,11 @@ contains
       wpthlp_forcing, rtp2_forcing, thlp2_forcing, &          ! intent(in)
       rtpthlp_forcing, wm_zm, wm_zt, &                        ! intent(in)
       wpthlp_sfc, wprtp_sfc, upwp_sfc, vpwp_sfc, &            ! intent(in)
+! +++ MDF
+      wp2_sfc, thlp2_sfc, rtp2_sfc, rtpthlp_sfc, &            ! intent(in)
+      wp4_sfc, wp3_sfc, wp2thlp_sfc, wp2rtp_sfc, &            ! intent(in)
+      wpthlp2_sfc, wprtp2_sfc, wprtpthlp_sfc, up2_sfc, &      ! intent(in)
+! --- MDF
       wpsclrp_sfc, wpedsclrp_sfc, &                           ! intent(in)
       p_in_Pa, rho_zm, rho, exner, &                          ! intent(in)
       rho_ds_zm, rho_ds_zt, invrs_rho_ds_zm, &                ! intent(in)

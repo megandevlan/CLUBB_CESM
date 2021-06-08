@@ -73,8 +73,12 @@ module advance_xm_wpxp_module
                               l_use_C7_Richardson, &
                               l_brunt_vaisala_freq_moist, &
                               l_use_thvm_in_bv_freq, &
-                              have_wp2thlp_sfc, wp2thlp_sfc, & 
-                              have_wp2rtp_sfc, wp2rtp_sfc, &
+                              have_wp2thlp_sfc, wp2thlp_sfc_clasp, & 
+                              have_wp2rtp_sfc, wp2rtp_sfc_clasp, &
+!+++ MDF 
+                              wp2thlp_sfc, wp2rtp_sfc,                         & ! intent(in)
+!--- MDF
+
                               rtm, wprtp, thlm, wpthlp, &
                               sclrm, wpsclrp, um, upwp, vm, vpwp )
 
@@ -249,8 +253,14 @@ module advance_xm_wpxp_module
     ! clasp 
     logical, intent(in) ::  & 
     have_wp2thlp_sfc, have_wp2rtp_sfc 
-    real( kind = selected_real_kind(12) ), intent(in) :: &
-    wp2thlp_sfc(1), wp2rtp_sfc(1)
+    !real( kind = selected_real_kind(12) ), intent(in) :: &
+    !wp2thlp_sfc_clasp(1), wp2rtp_sfc_clasp(1)
+!+++ MDF
+    real( kind = core_rknd ), intent(in) :: &
+       wp2thlp_sfc_clasp(1), wp2rtp_sfc_clasp(1)
+    real( kind = core_rknd ), intent(in) :: &
+       wp2thlp_sfc, wp2rtp_sfc
+!--- MDF
 
     ! Additional variables for passive scalars
     real( kind = core_rknd ), intent(in), dimension(gr%nz,sclr_dim) :: & 
@@ -542,8 +552,11 @@ module advance_xm_wpxp_module
                                  l_explicit_turbulent_adv_wpxp, l_predict_upwp_vpwp, &
                                  l_scalar_calc, &
                                  l_upwind_wpxp_ta, &
-                                 have_wp2thlp_sfc, wp2thlp_sfc, & 
-                                 have_wp2rtp_sfc, wp2rtp_sfc, &
+                                 have_wp2thlp_sfc, wp2thlp_sfc_clasp, & 
+                                 have_wp2rtp_sfc, wp2rtp_sfc_clasp, &
+!+++ MDF
+                                 wp2thlp_sfc, wp2rtp_sfc, &
+!--- MDF
                                  lhs_ta_wprtp, lhs_ta_wpthlp, lhs_ta_wpup, &
                                  lhs_ta_wpvp, lhs_ta_wpsclrp, &
                                  rhs_ta_wprtp, rhs_ta_wpthlp, rhs_ta_wpup, &
@@ -1691,8 +1704,11 @@ module advance_xm_wpxp_module
                                     l_explicit_turbulent_adv_wpxp, l_predict_upwp_vpwp, &
                                     l_scalar_calc, &
                                     l_upwind_wpxp_ta, &
-                                    have_wp2thlp_sfc, wp2thlp_sfc, & 
-                                    have_wp2rtp_sfc, wp2rtp_sfc, &
+                                    have_wp2thlp_sfc, wp2thlp_sfc_clasp, & 
+                                    have_wp2rtp_sfc, wp2rtp_sfc_clasp, &
+! +++ MDF
+                                    wp2thlp_sfc, wp2rtp_sfc, &
+! --- MDF
                                     lhs_ta_wprtp, lhs_ta_wpthlp, lhs_ta_wpup, &
                                     lhs_ta_wpvp, lhs_ta_wpsclrp, &
                                     rhs_ta_wprtp, rhs_ta_wpthlp, rhs_ta_wpup, &
@@ -1785,8 +1801,17 @@ module advance_xm_wpxp_module
     ! clasp 
     logical, intent(in) ::  & 
          have_wp2thlp_sfc, have_wp2rtp_sfc 
-    real( kind = selected_real_kind(12) ), intent(in) :: &
-         wp2thlp_sfc(1), wp2rtp_sfc(1)
+!    real( kind = selected_real_kind(12) ), intent(in) :: &
+!    real( kind = core_rknd ), dimension(1), intent(in) :: &
+!         wp2thlp_sfc_clasp(1), wp2rtp_sfc_clasp(1)
+!        wp2thlp_sfc_clasp, wp2rtp_sfc_clasp 
+
+!+++ MDF
+    real( kind = core_rknd ), intent(in) :: &
+        wp2thlp_sfc_clasp(1), wp2rtp_sfc_clasp(1)
+    real( kind = core_rknd ), intent(in) :: &
+        wp2thlp_sfc, wp2rtp_sfc
+!--- MDF
     !------------------- Output Variables -------------------
         
     real( kind = core_rknd ), dimension(3,gr%nz), intent(out) :: &
@@ -2059,7 +2084,12 @@ module advance_xm_wpxp_module
            term_wp2rtp_explicit_zm = zt2zm( pdf_implicit_coefs_terms%coef_wp2thlp_implicit )
 
            ! clasp
-           if (have_wp2rtp_sfc) term_wp2rtp_explicit_zm(1) = wp2rtp_sfc(1)
+           !if (have_wp2rtp_sfc) term_wp2rtp_explicit_zm(1) = wp2rtp_sfc_clasp(1)
+!+++ MDF 
+           !if (wp2rtp_sfc .ne. -9999.0_core_rknd) then 
+           !   term_wp2rtp_explicit_zm(1) = wp2rtp_sfc
+           !end if
+!--- MDF
 
            ! Calculate the sign of the turbulent velocity for <w'rt'>.
            sgn_t_vel_wprtp &
@@ -2101,8 +2131,12 @@ module advance_xm_wpxp_module
            term_wp2thlp_explicit_zm = zt2zm( pdf_implicit_coefs_terms%term_wp2thlp_explicit )
 
            ! clasp
-           if (have_wp2thlp_sfc) term_wp2thlp_explicit_zm(1) = wp2thlp_sfc(1)
-
+           !if (have_wp2thlp_sfc) term_wp2thlp_explicit_zm(1) = wp2thlp_sfc(1)
+!+++ MDF
+           !if (wp2thlp_sfc .ne. -9999.0_core_rknd) then 
+           !   term_wp2thlp_explicit_zm(1) = wp2thlp_sfc
+           !end if
+!--- MDF
            ! Calculate the sign of the turbulent velocity for <w'thl'>.
            sgn_t_vel_wpthlp &
            = sgn_turbulent_velocity( coef_wp2thlp_implicit_zm * wpthlp &

@@ -128,6 +128,11 @@ module advance_clubb_core_module
                wpthlp_forcing, rtp2_forcing, thlp2_forcing, &       ! intent(in)
                rtpthlp_forcing, wm_zm, wm_zt, &                     ! intent(in)
                wpthlp_sfc, wprtp_sfc, upwp_sfc, vpwp_sfc, &         ! intent(in)
+! +++ MDF
+               wp2_sfc, thlp2_sfc, rtp2_sfc, rtpthlp_sfc, &         ! intent(in)
+               wp4_sfc, wp3_sfc, wp2thlp_sfc, wp2rtp_sfc, &         ! intent(in)
+               wpthlp2_sfc, wprtp2_sfc, wprtpthlp_sfc, up2_sfc, &   ! intent(in) 
+! --- MDF
                wpsclrp_sfc, wpedsclrp_sfc, &                        ! intent(in)
                p_in_Pa, rho_zm, rho, exner, &                       ! intent(in)
                rho_ds_zm, rho_ds_zt, invrs_rho_ds_zm, &             ! intent(in)
@@ -181,6 +186,9 @@ module advance_clubb_core_module
 
     ! Modules to be included
 
+!+++ MDF
+    use cam_logfile,            only: iulog
+!--- MDF
     use constants_clubb, only: &
         em_min, &
         thl_tol, &
@@ -534,7 +542,23 @@ module advance_clubb_core_module
       wpthlp_sfc,   & ! w' theta_l' at surface   [(m K)/s]
       wprtp_sfc,    & ! w' r_t' at surface       [(kg m)/( kg s)]
       upwp_sfc,     & ! u'w' at surface          [m^2/s^2]
-      vpwp_sfc        ! v'w' at surface          [m^2/s^2]
+      !vpwp_sfc        ! v'w' at surface          [m^2/s^2]
+! +++ MDF
+      vpwp_sfc,      &  ! v'w' at surface                [m^2/s^2]
+      wp2_sfc,       &  ! w'w' at surface                [m^2/s^2] 
+      thlp2_sfc,     &  ! theta_l'theta_l' at surface    [K^2] 
+      rtp2_sfc,      &  ! r_t'r_t' at surface            [kg/kg]
+      rtpthlp_sfc,   &  ! r_t'theta_l' at surface        [K kg/kg]
+      wp4_sfc,       &  ! w'w'w'w' at surface            [m^2/s^2] 
+      wp3_sfc,       &  ! w'w'w' at surface              [m^3/s^3]
+      wp2thlp_sfc,   &  ! w'w'theta_l' at surface        [K m^2/s^2] 
+      wp2rtp_sfc,    &  ! w'w'r_t' at surface            [m^2 kg/s^2 kg]
+      wpthlp2_sfc,   &  ! w'theta_l'theta_l' at surface  [K^2 m/s]
+      wprtp2_sfc,    &  ! w'r_t'r_t' at surface          [m kg^2/s kg^2]
+      wprtpthlp_sfc, &  ! w'theta_l'r_t' at surface      [K m kg/s kg]
+      up2_sfc           ! u'u' at surface                [m^2/s^2] 
+! --- MDF
+
 
     ! Passive scalar variables
     real( kind = core_rknd ), intent(in), dimension(gr%nz,sclr_dim) :: &
@@ -958,7 +982,12 @@ module advance_clubb_core_module
     wp2_zt = max( zm2zt( wp2 ), w_tol_sqd ) ! Positive definite quantity
     wp3_zm = zt2zm( wp3 )
     ! clasp 
-    if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1) 
+    !if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1)
+!+++ MDF
+    !if (wp3_sfc .ne. -9999.0_core_rknd) then 
+    !   wp3_zm(1) = wp3_sfc
+    !end if 
+!--- MDF
 
     if ( ipdf_call_placement == ipdf_pre_advance_fields &
          .or. ipdf_call_placement == ipdf_pre_post_advance_fields ) then
@@ -1334,13 +1363,38 @@ module advance_clubb_core_module
                              sclrprtp(1,1:sclr_dim),                         &      ! intent(out)
                              sclrpthlp(1,1:sclr_dim) )                              ! intent(out)
         
-        ! clasp 
+        ! clasp
+!+++ MDF
+        if (thlp2_sfc .ne. -9999.0_core_rknd) then
+           !wp2(1)     = wp2_sfc
+           thlp2(1)   = thlp2_sfc  
+           rtp2(1)    = rtp2_sfc 
+           rtpthlp(1) = rtpthlp_sfc 
+           !wp4(1)     = wp4_sfc 
+           !up2(1)     = up2_sfc
+           ! Thermodynamic levels, try defining at (2)
+           !wp3(2)     = wp3_sfc
+           !wp2thlp(2) = wp2thlp_sfc
+           !wp2rtp(2)  = wp2rtp_sfc
+           !wpthlp2(2) = wpthlp2_sfc
+           !wprtp2(2)  = wprtp2_sfc
+           !wprtpthlp(2) = wprtpthlp_sfc
+
+           !  Thermodynamic levels, but defined at (1) 
+           !wp3(1)     = wp3_sfc
+           !wp2thlp(1) = wp2thlp_sfc
+           !wp2rtp(1)  = wp2rtp_sfc 
+           !wpthlp2(1) = wpthlp2_sfc 
+           !wprtp2(1)  = wprtp2_sfc 
+           !wprtpthlp(1) = wprtpthlp_sfc 
+        end if 
+!--- MDF
         ! momentum levels 
-        if (have_wp2_clasp) wp2(1) = wp2_clasp(1) 
-        if (have_rtp2_clasp) rtp2(1) = rtp2_clasp(1) 
-        if (have_thlp2_clasp) thlp2(1) = thlp2_clasp(1) 
-        if (have_rtpthlp_clasp) rtpthlp(1) = rtpthlp_clasp(1) 
-        if (have_wp4_clasp) wp4(1) = wp4_clasp(1) 
+        !if (have_wp2_clasp) wp2(1) = wp2_clasp(1) 
+        !if (have_rtp2_clasp) rtp2(1) = rtp2_clasp(1) 
+        !if (have_thlp2_clasp) thlp2(1) = thlp2_clasp(1) 
+        !if (have_rtpthlp_clasp) rtpthlp(1) = rtpthlp_clasp(1) 
+        !if (have_wp4_clasp) wp4(1) = wp4_clasp(1) 
         ! thermodynamic levels 
         ! if (have_wp3_clasp) wp3(1) = wp3_clasp(1) 
         ! if (have_wp2thlp_clasp) wp2thlp(1) = wp2thlp_clasp(1) 
@@ -1520,6 +1574,9 @@ module advance_clubb_core_module
                             clubb_config_flags%l_use_thvm_in_bv_freq,        & ! intent(in)
                             have_wp2thlp_clasp, wp2thlp_clasp,            & ! clasp intent(in)
                             have_wp2rtp_clasp, wp2rtp_clasp,              &
+!+++ MDF 
+                            wp2thlp_sfc, wp2rtp_sfc,                         & ! intent(in)
+!--- MDF
                             rtm, wprtp, thlm, wpthlp,                        & ! intent(inout)
                             sclrm, wpsclrp, um, upwp, vm, vpwp )               ! intent(inout)
 
@@ -1575,6 +1632,9 @@ module advance_clubb_core_module
                              have_wprtp2_clasp, wprtp2_clasp,            & ! clasp intent(in)
                              have_wpthlp2_clasp, wpthlp2_clasp,          &
                              have_wprtpthlp_clasp, wprtpthlp_clasp,      &
+!+++ MDF
+                             wprtp2_sfc, wpthlp2_sfc, wprtpthlp_sfc,    & ! intent(in)
+!--- MDF
                              clubb_config_flags%l_predict_upwp_vpwp,    & ! intent(in)
                              clubb_config_flags%l_min_xp2_from_corr_wx, & ! intent(in)
                              clubb_config_flags%l_C2_cloud_frac,        & ! intent(in)
@@ -1643,7 +1703,16 @@ module advance_clubb_core_module
              wp2, wp3, wp3_zm, wp2_zt )                            ! intent(inout)
 
       ! clasp 
-      if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1)   ! for output purposes
+      !if (have_wp3_clasp) wp3_zm(1) = wp3_clasp(1)   ! for output purposes
+!+++ MDF
+      !if (wp3_sfc .ne. -9999.0_core_rknd) then 
+      !   wp3_zm(1) = wp3_sfc
+
+         ! Try defining at level (2)
+         !wp3(2) = wp3_sfc
+      !   wp3(1) = wp3_sfc 
+     ! endif 
+!--- MDF      
 
       if ( clubb_at_least_debug_level( 0 ) ) then
           if ( err_code == clubb_fatal_error ) then
