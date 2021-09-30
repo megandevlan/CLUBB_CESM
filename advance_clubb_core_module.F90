@@ -131,7 +131,7 @@ module advance_clubb_core_module
 ! +++ MDF
                wp2_sfc, thlp2_sfc, rtp2_sfc, rtpthlp_sfc, &         ! intent(in)
                wp4_sfc, wp3_sfc, wp2thlp_sfc, wp2rtp_sfc, &         ! intent(in)
-               wpthlp2_sfc, wprtp2_sfc, wprtpthlp_sfc, up2_sfc, &   ! intent(in) 
+               wpthlp2_sfc, wprtp2_sfc, wprtpthlp_sfc, up2_sfc,vp2_sfc, &   ! intent(in) 
 ! --- MDF
                wpsclrp_sfc, wpedsclrp_sfc, &                        ! intent(in)
                p_in_Pa, rho_zm, rho, exner, &                       ! intent(in)
@@ -556,7 +556,8 @@ module advance_clubb_core_module
       wpthlp2_sfc,   &  ! w'theta_l'theta_l' at surface  [K^2 m/s]
       wprtp2_sfc,    &  ! w'r_t'r_t' at surface          [m kg^2/s kg^2]
       wprtpthlp_sfc, &  ! w'theta_l'r_t' at surface      [K m kg/s kg]
-      up2_sfc           ! u'u' at surface                [m^2/s^2] 
+      up2_sfc,       &  ! u'u' at surface                [m^2/s^2] 
+      vp2_sfc           ! v'v' at surface                [m^2/s^2] 
 ! --- MDF
 
 
@@ -1366,12 +1367,13 @@ module advance_clubb_core_module
         ! clasp
 !+++ MDF
         if (thlp2_sfc .ne. -9999.0_core_rknd) then
-           !wp2(1)     = wp2_sfc
+           wp2(1)     = wp2_sfc
            thlp2(1)   = thlp2_sfc  
            rtp2(1)    = rtp2_sfc 
            rtpthlp(1) = rtpthlp_sfc 
            !wp4(1)     = wp4_sfc 
-           !up2(1)     = up2_sfc
+           up2(1)     = up2_sfc
+           vp2(1)     = vp2_sfc
            ! Thermodynamic levels, try defining at (2)
            !wp3(2)     = wp3_sfc
            !wp2thlp(2) = wp2thlp_sfc
